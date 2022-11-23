@@ -4,8 +4,10 @@ INCLUDE sha256 FROM hashlib;
 $ Define the print function
 DEFINE FUNC print;
 
+    CALL input ARGS ("input: ");
+
     $ Hash "hi"
-    CALL sha256 ARGS (b'hi');
+    CALL sha256 ARGS (RETURN.encode());
 
     $ hex digest it
     CALL RETURN.hexdigest;
