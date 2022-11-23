@@ -47,7 +47,7 @@ def process(line):
         del globals()[line.split(" ")[2].removesuffix(";")]
     elif regex.match("DELETE FUNC .*;", line):
         del globals()[line.split(" ")[2].removesuffix(";")]
-    elif regex.match("RECORD FUNC .*;", line):
+    elif regex.match("DEFINE FUNC .*;", line):
         if line.split(" ")[2].removesuffix(";") != 'RETURN':
             out_function = line.split(" ")[2].removesuffix(";")
             globals()[line.split(" ")[2].removesuffix(";")] = []

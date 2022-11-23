@@ -2,7 +2,7 @@ $ Include the sha256 function from the hashlib library
 INCLUDE sha256 FROM hashlib;
 
 $ Define the print function
-RECORD FUNC print;
+DEFINE FUNC print;
 
     $ Hash "hi"
     CALL sha256 ARGS (b'hi');
