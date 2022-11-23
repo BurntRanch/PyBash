@@ -61,11 +61,13 @@ def process(line):
     else:
         raise SyntaxError(line)
 
+# check if a file is supplied
 if len(sys.argv) < 2:
     while True:
         line = input(">> ")
         process(line)
 else:
+    # check format and execute each line
     if os.path.isfile(sys.argv[1]) and sys.argv[1].endswith(".pym"):
         with open(sys.argv[1], 'r') as f:
             lines = f.read().splitlines()
