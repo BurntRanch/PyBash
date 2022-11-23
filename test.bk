@@ -1,0 +1,20 @@
+$ Include the time library
+INCLUDE sha256 FROM hashlib;
+
+$ Define the print function
+RECORD FUNC print;
+
+    $ Hash "hi"
+    CALL sha256 ARGS (b'hi');
+
+    $ hex digest it
+    CALL RETURN.hexdigest;
+
+    $ Print the result of the hex digest
+    CALL sys.stdout.write ARGS (RETURN + '\n');
+
+$ End of function definition
+EXIT FUNC;
+
+$ Call print
+CALL print;
