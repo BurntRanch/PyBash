@@ -3,17 +3,19 @@ import sys
 import os
 
 out_function = ""
+skip_until = ""
 
 def exit():
     print("Goodbye!")
     sys.exit(0)
 
 def process(line):
-    global out_function
-    if line == "EXIT FUNC;":
-        out_function = ""
+    global out_function, skip_until
+    if line.startswith("$") or line == '' or (skip_until and not line.endswith(skip_until)):
         return
-    if line.startswith("$") or line == '':
+    skip_until = ""
+    if line.endswith("EXIT FUNC;"):
+        out_function = ""
         return
     if out_function:
         globals()[out_function].append(line.removeprefix('    ').removeprefix('\t'))
@@ -58,6 +60,13 @@ def process(line):
             exec(f'from {line.split(" ")[3].removesuffix(";")} import {line.split(" ")[1]}', globals())
         else:
             exec(f'import {line.split(" ")[1].removesuffix(";")}', globals())
+    elif regex.match("IF .*;", line):
+        exec(f'__IF_RETURN__ = not not {" ".join(line.split(" ")[1:]).removesuffix(";")}', globals())
+        if not __IF_RETURN__:
+            skip_until = "ENDIF;"
+        del globals()['__IF_RETURN__']
+    elif line.endswith(skip_until):
+        skip_until = ""
     else:
         raise SyntaxError(line)
 
@@ -74,4 +83,4 @@ else:
             for i in lines:
                 process(i)
     else:
-        print("FATAL: Unrecognized file format. (Try putting .bk in the end of the file name!)")
+        print("FATAL: Unrecognized file format. (Try putting .pym in the end of the file name!)")

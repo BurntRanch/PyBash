@@ -5,12 +5,14 @@ $ Define the print function
 DEFINE FUNC print;
 
     CALL input ARGS ("input: ");
-
+    
+    IF RETURN == "hi";
     $ Hash "hi"
     CALL sha256 ARGS (RETURN.encode());
 
     $ hex digest it
     CALL RETURN.hexdigest;
+    ENDIF;
 
     $ Print the result of the hex digest
     CALL sys.stdout.write ARGS (RETURN + '\n');
