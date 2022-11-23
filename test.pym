@@ -1,4 +1,4 @@
-$ Include the time library
+$ Include the sha256 function from the hashlib library
 INCLUDE sha256 FROM hashlib;
 
 $ Define the print function
