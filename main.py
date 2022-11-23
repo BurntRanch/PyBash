@@ -13,7 +13,6 @@ def process(line):
     global out_function, skip_until
     if line.startswith("$") or line == '' or (skip_until and not line.endswith(skip_until)):
         return
-    skip_until = ""
     if line.endswith("EXIT FUNC;"):
         out_function = ""
         return
