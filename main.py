@@ -66,7 +66,7 @@ if len(sys.argv) < 2:
         line = input(">> ")
         process(line)
 else:
-    if os.path.isfile(sys.argv[1]) and sys.argv[1].endswith(".bk"):
+    if os.path.isfile(sys.argv[1]) and sys.argv[1].endswith(".pym"):
         with open(sys.argv[1], 'r') as f:
             lines = f.read().splitlines()
             for i in lines:
