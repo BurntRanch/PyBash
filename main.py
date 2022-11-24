@@ -5,6 +5,8 @@ from helpers.pyasm_errors import InvalidVariableName
 
 __out_function__ = ""
 __skip_until__ = ""
+__in_while_loop__ = False
+__while_loop__ = []
 
 def exit():
     print("Goodbye!")
@@ -17,8 +19,8 @@ def __process_file__(filename):
             process(i)
 
 
-def process(line):
-    global __out_function__, __skip_until__
+def process(line, ignore_while_loop = False):
+    global __out_function__, __skip_until__, __while_loop__, __in_while_loop__
     if line.startswith("$") or line == '' or (__skip_until__ and (not line.endswith(__skip_until__))):
         if line.endswith("ENDIF;"):
             __skip_until__ = ""
@@ -28,6 +30,9 @@ def process(line):
         return
     if __out_function__:
         globals()[__out_function__].append(line.removeprefix('    ').removeprefix('\t'))
+        return
+    if __in_while_loop__ and not line.endswith("ENDWHILE;") and not ignore_while_loop:
+        __while_loop__.append(line.removeprefix('    ').removeprefix('\t'))
         return
     if regex.match("CALL .*;", line):
         if regex.match("CALL .* ARGS \(.*\);", line):
@@ -49,7 +54,7 @@ def process(line):
                 exec(f'RETURN = {"".join(line.split(" ")[1]).removesuffix(";")}()', globals())
     elif regex.match("SET .* TO .*;", line):
         if line.split(" ")[1] != 'RETURN' and not regex.match("__.*__", line.split(" ")[1]):
-            globals()[line.split(" ")[1]] = " ".join(line.split(" ")[3:]).removesuffix(";")
+            exec(f'{line.split(" ")[1]} = {" ".join(line.split(" ")[3:]).removesuffix(";")}', globals())
         else:
             raise InvalidVariableName(line + ", You can't set PyAsm runtime variables.")
     elif regex.match("DELETE VAR .*;", line):
@@ -77,11 +82,24 @@ def process(line):
             __skip_until__ = "ELSE;"
         #del globals()['__IF_RETURN__']
     # if we see an ELSE;
+    elif regex.match("WHILE .*;", line):
+        globals()['__WHILE_STATEMENT__'] = " ".join(line.split(" ")[1:]).removesuffix(";")
+        # exec(f'__WHILE_RETURN__ = not not {" ".join(line.split(" ")[1:]).removesuffix(";")}', globals())
+        # if not __WHILE_RETURN__:
+        #     __skip_until__ = "ENDWHILE;"
+        # else:
+        __in_while_loop__ = True
     elif line.endswith("ELSE;"):
         if __IF_RETURN__:
             __skip_until__ = "ENDIF;"
         else:
             __skip_until__ = ""
+    elif __in_while_loop__ and line.endswith("ENDWHILE;") and not ignore_while_loop:
+        #breakpoint()
+        while eval(__WHILE_STATEMENT__):
+            for l in __while_loop__:
+                process(l, True)
+        __in_while_loop__ = False
     elif line.endswith(__skip_until__):
         __skip_until__ = ""
     else:
