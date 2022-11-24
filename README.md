@@ -7,3 +7,4 @@ TO-DO list:
 2. Nested IF statements
 3. For loops
 4. Else-ifs
+6. Function arguments
