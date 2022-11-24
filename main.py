@@ -4,13 +4,14 @@ import os
 
 out_function = ""
 skip_until = ""
+layers = 0
 
 def exit():
     print("Goodbye!")
     sys.exit(0)
 
 def process(line):
-    global out_function, skip_until
+    global out_function, skip_until, layers
     if line.startswith("$") or line == '' or (skip_until and (not line.endswith(skip_until))):
         if line.endswith("ENDIF;"):
             skip_until = ""
@@ -63,7 +64,6 @@ def process(line):
         exec(f'__IF_RETURN__ = not not {" ".join(line.split(" ")[1:]).removesuffix(";")}', globals())
         # if the statement is false
         if not __IF_RETURN__:
-            # skip until we see an ELSE;
             skip_until = "ELSE;"
         #del globals()['__IF_RETURN__']
     # if we see an ELSE;
@@ -76,6 +76,7 @@ def process(line):
         skip_until = ""
     else:
         raise SyntaxError(line)
+    #breakpoint()
 
 # check if a file is supplied
 if len(sys.argv) < 2:
