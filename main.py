@@ -9,7 +9,7 @@ __in_while_loop__ = False
 __while_loop__ = []
 
 def exit():
-    print("Goodbye!")
+    sys.stdout.write("Goodbye!\n")
     sys.exit(0)
 
 def __process_file__(filename):
@@ -37,7 +37,7 @@ def process(line, ignore_while_loop = False):
     if regex.match("CALL .*;", line):
         if regex.match("CALL .* ARGS \(.*\);", line):
             if " ".join(line.split(" ")[3][:-1]) == "( )":
-                print("WARN: You shouldn't use CALL x ARGS (); to call a function that doesn't take an argument, use CALL x; instead.")
+                sys.stdout.write("WARN: You shouldn't use CALL x ARGS (); to call a function that doesn't take an argument, use CALL x; instead.\n")
             if len(line.split(" ")) <= 3:
                 exec(f'RETURN = {line.split(" ")[1]}{line.split(" ")[3].removesuffix(";")}', globals())
                 if not globals()['RETURN']:
@@ -47,7 +47,7 @@ def process(line, ignore_while_loop = False):
                 if not globals()['RETURN']:
                     globals()['RETURN'] = "None"
         else:
-            if globals().get("".join(line.split(" ")[1]).removesuffix(";"), None):
+            if isinstance(globals().get("".join(line.split(" ")[1]).removesuffix(";"), None), list):
                 for i in globals().get("".join(line.split(" ")[1]).removesuffix(";"), None):
                     process(i)
             else:
