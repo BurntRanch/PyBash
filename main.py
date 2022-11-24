@@ -11,7 +11,9 @@ def exit():
 
 def process(line):
     global out_function, skip_until
-    if line.startswith("$") or line == '' or (skip_until and not line.endswith(skip_until)):
+    if line.startswith("$") or line == '' or (skip_until and (not line.endswith(skip_until))):
+        if line.endswith("ENDIF;"):
+            skip_until = ""
         return
     if line.endswith("EXIT FUNC;"):
         out_function = ""
@@ -37,8 +39,6 @@ def process(line):
                     process(i)
             else:
                 exec(f'RETURN = {"".join(line.split(" ")[1]).removesuffix(";")}()', globals())
-                if not globals()['RETURN']:
-                    globals()['RETURN'] = "None"
     elif regex.match("SET .* TO .*;", line):
         if line.split(" ")[1] != 'RETURN':
             globals()[line.split(" ")[1]] = " ".join(line.split(" ")[3:]).removesuffix(";")
@@ -61,9 +61,17 @@ def process(line):
             exec(f'import {line.split(" ")[1].removesuffix(";")}', globals())
     elif regex.match("IF .*;", line):
         exec(f'__IF_RETURN__ = not not {" ".join(line.split(" ")[1:]).removesuffix(";")}', globals())
+        # if the statement is false
         if not __IF_RETURN__:
+            # skip until we see an ELSE;
+            skip_until = "ELSE;"
+        #del globals()['__IF_RETURN__']
+    # if we see an ELSE;
+    elif line.endswith("ELSE;"):
+        if __IF_RETURN__:
             skip_until = "ENDIF;"
-        del globals()['__IF_RETURN__']
+        else:
+            skip_until = ""
     elif line.endswith(skip_until):
         skip_until = ""
     else:

@@ -5,17 +5,24 @@ $ Define the print function
 DEFINE FUNC print;
 
     CALL input ARGS ("input: ");
-    
-    IF RETURN == "hi";
     $ Hash "hi"
     CALL sha256 ARGS (RETURN.encode());
 
     $ hex digest it
     CALL RETURN.hexdigest;
+    
+    IF RETURN == "8f434346648f6b96df89dda901c5176b10a6d83961dd3c1ac88b59b2dc327aa4";
+
+    CALL sys.stdout.write ARGS ("Correct password!\n");
+
+    ELSE;
+
+    CALL sys.stdout.write ARGS ("Incorrect password!\n");
+
     ENDIF;
 
-    $ Print the result of the hex digest
-    CALL sys.stdout.write ARGS (RETURN + '\n');
+    CALL sys.stdout.write ARGS ("Bye!\n");
+    CALL sys.exit ARGS (0);
 
 $ End of function definition
 EXIT FUNC;
