@@ -11,10 +11,6 @@ DEFINE FUNC verify ARGS pswd pswd_hash;
     CALL RETURN.hexdigest;
 
     SET hash TO RETURN;
-
-    SET counter TO 0;
-
-    SET exit TO False;
     
     $ if input is equal to the hash of "hi"
     IF hash == pswd_hash;
