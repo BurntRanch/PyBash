@@ -1,7 +1,7 @@
 import regex
 import sys
 import os
-from helpers.pyasm_errors import InvalidVariableName
+from helpers.pyasm_errors import AccessError
 
 __out_function__ = ""
 __skip_until__ = ""
@@ -25,14 +25,14 @@ def process(line, ignore_while_loop = False):
         if line.endswith("ENDIF;"):
             __skip_until__ = ""
         return
-    if line.endswith("EXIT FUNC;"):
+    if line == "EXIT FUNC;":
         __out_function__ = ""
         return
     if __out_function__:
         globals()[__out_function__].append(line.removeprefix('    ').removeprefix('\t'))
         return
-    if __in_while_loop__ and not line.endswith("ENDWHILE;") and not ignore_while_loop:
-        __while_loop__.append(line.removeprefix('    ').removeprefix('\t'))
+    if __in_while_loop__ and not line == "ENDWHILE;" and not ignore_while_loop:
+        __while_loop__.append(line)
         return
     if regex.match("CALL .*;", line):
         if regex.match("CALL .* ARGS \(.*\);", line):
@@ -56,7 +56,19 @@ def process(line, ignore_while_loop = False):
         if line.split(" ")[1] != 'RETURN' and not regex.match("__.*__", line.split(" ")[1]):
             exec(f'{line.split(" ")[1]} = {" ".join(line.split(" ")[3:]).removesuffix(";")}', globals())
         else:
-            raise InvalidVariableName(line + ", You can't set PyAsm runtime variables.")
+            raise AccessError(line + ", You can't set PyAsm runtime variables.")
+    elif regex.match("INCREMENT .* BY .*;", line):
+        if line.split(" ")[-1].removesuffix(';').isnumeric():
+            if not regex.match("__.*__", line.split(" ")[1]):
+                globals()[line.split(" ")[1]] += int(line.split(" ")[-1].removesuffix(';'))
+            else:
+                raise AccessError("'" + line + "', You can't set PyAsm runtime variables.")
+    elif regex.match("DECREMENT .* BY .*;", line):
+        if line.split(" ")[-1].removesuffix(';').isnumeric():
+            if not regex.match("__.*__", line.split(" ")[1]):
+                globals()[line.split(" ")[1]] -= int(line.split(" ")[-1].removesuffix(';'))
+            else:
+                raise AccessError("'" + line + "', You can't set PyAsm runtime variables.")
     elif regex.match("DELETE VAR .*;", line):
         del globals()[line.split(" ")[2].removesuffix(";")]
     elif regex.match("DELETE FUNC .*;", line):
@@ -66,7 +78,7 @@ def process(line, ignore_while_loop = False):
             __out_function__ = line.split(" ")[2].removesuffix(";")
             globals()[line.split(" ")[2].removesuffix(";")] = []
         else:
-            raise InvalidVariableName("'" + line + "' You can't set PyAsm runtime variables.")
+            raise AccessError("'" + line + "' You can't set PyAsm runtime variables.")
     elif regex.match("INCLUDE .*;", line):
         if regex.match("INCLUDE .* FROM .*;", line):
             exec(f'from {line.split(" ")[3].removesuffix(";")} import {line.split(" ")[1]}', globals())
@@ -77,34 +89,25 @@ def process(line, ignore_while_loop = False):
                 exec(f'import {line.split(" ")[1].removesuffix(";")}', globals())
     elif regex.match("IF .*;", line):
         exec(f'__IF_RETURN__ = not not {" ".join(line.split(" ")[1:]).removesuffix(";")}', globals())
-        # if the statement is false
         if not __IF_RETURN__:
             __skip_until__ = "ELSE;"
-        #del globals()['__IF_RETURN__']
-    # if we see an ELSE;
     elif regex.match("WHILE .*;", line):
         globals()['__WHILE_STATEMENT__'] = " ".join(line.split(" ")[1:]).removesuffix(";")
-        # exec(f'__WHILE_RETURN__ = not not {" ".join(line.split(" ")[1:]).removesuffix(";")}', globals())
-        # if not __WHILE_RETURN__:
-        #     __skip_until__ = "ENDWHILE;"
-        # else:
         __in_while_loop__ = True
-    elif line.endswith("ELSE;"):
+    elif line == "ELSE;":
         if __IF_RETURN__:
             __skip_until__ = "ENDIF;"
         else:
             __skip_until__ = ""
-    elif __in_while_loop__ and line.endswith("ENDWHILE;") and not ignore_while_loop:
-        #breakpoint()
+    elif __in_while_loop__ and line == "ENDWHILE;" and not ignore_while_loop:
         while eval(__WHILE_STATEMENT__):
             for l in __while_loop__:
                 process(l, True)
         __in_while_loop__ = False
-    elif line.endswith(__skip_until__):
+    elif line == __skip_until__:
         __skip_until__ = ""
     else:
         raise SyntaxError(line)
-    #breakpoint()
 
 # check if a file is supplied
 if len(sys.argv) < 2:
@@ -113,10 +116,4 @@ if len(sys.argv) < 2:
         process(line)
 else:
     # check format and execute each line
-    if os.path.isfile(sys.argv[1]) and sys.argv[1].endswith(".pym"):
-        with open(sys.argv[1], 'r') as f:
-            lines = f.read().splitlines()
-            for i in lines:
-                process(i)
-    else:
-        print("FATAL: Unrecognized file format. (Try putting .pym in the end of the file name!)")
+    __process_file__(sys.argv[1])

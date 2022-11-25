@@ -1,6 +1,6 @@
 
 
-class InvalidVariableName(Exception):
+class AccessError(Exception):
     """ Raised when a user tries to set PyAsm runtime variables """
     pass
 

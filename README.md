@@ -5,7 +5,8 @@ PyAsm is a general-purpose dynamic-typed language based on Python and Assembly, 
 The engine uses Regex to process each line.
 
 TO-DO list:
-1. Nested IF statements
-2. For loops
-3. Else-ifs
-4. Function arguments
+1. Nested WHILE loops
+2. Nested IF statements
+3. For loops
+4. Else-ifs
+5. Function arguments
