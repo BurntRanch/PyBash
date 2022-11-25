@@ -10,6 +10,7 @@ __while_loops__ = []
 layers = 0
 __force_ignore_while__ = False
 __while_statements__ = []
+__if_return__ = False
 globals_pyasm = {}
 
 def exit():
@@ -94,8 +95,8 @@ def process(line, __ignore_while_loop__ = False):
             else:
                 exec(f'import {line.split(" ")[1].removesuffix(";")}', globals_pyasm)
     elif regex.match("IF .*;", line):
-        __IF_RETURN__ = eval(f'not not {" ".join(line.split(" ")[1:]).removesuffix(";")}', globals_pyasm)
-        if not __IF_RETURN__:
+        __if_return__ = eval(f'not not {" ".join(line.split(" ")[1:]).removesuffix(";")}', globals_pyasm)
+        if not __if_return__:
             __skip_until__ = "ELSE;"
     elif regex.match("WHILE .*;", line):
         __while_statements__.append(" ".join(line.split(" ")[1:]).removesuffix(";"))
@@ -103,7 +104,7 @@ def process(line, __ignore_while_loop__ = False):
         __in_while_loop__ = True
         __force_ignore_while__ = True
     elif line == "ELSE;":
-        if __IF_RETURN__:
+        if __if_return__:
             __skip_until__ = "ENDIF;"
         else:
             __skip_until__ = ""
