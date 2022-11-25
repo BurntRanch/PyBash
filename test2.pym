@@ -19,26 +19,29 @@ DEFINE FUNC print;
 
     SET exit TO False;
     
-    $ if input is equal to the hash of "hi" and the counter is less than or equal to 10
+    $ if input is equal to the hash of "hi"
     IF hash == "8f434346648f6b96df89dda901c5176b10a6d83961dd3c1ac88b59b2dc327aa4";
 
-        WHILE counter < 10;
-    
-            CALL sys.stdout.write ARGS ("nice\n");
+        IF True;
+            $ while the counter is less than 10
+            WHILE counter < 10;
 
-            INCREMENT counter BY 1;
+                $ add one to it and call sys.stdout.write
+                INCREMENT counter BY 1;
 
-        ENDWHILE;
+                IF counter <= 5;
+                    CALL sys.stdout.write ARGS (str(counter) + '\n');
+                ENDIF;
 
+            ENDWHILE;
+        
+        ENDIF;
+
+        $ yes
         CALL sys.stdout.write ARGS ("ok im gonna break now\n");
 
     ENDIF;
 
-    DECREMENT counter BY 5;
-
-    $ CALL breakpoint;
-
-    CALL sys.stdout.write ARGS ("Bye!\n");
     CALL sys.exit;
 
 $ End of function definition
