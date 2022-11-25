@@ -6,7 +6,7 @@ from helpers.pyasm_errors import AccessError
 __out_function__ = ""
 __skip_until__ = ""
 __in_while_loop__ = False
-__while_loop__ = []
+__while_loops__ = []
 
 def exit():
     sys.stdout.write("Goodbye!\n")
@@ -20,8 +20,8 @@ def __process_file__(filename):
 
 
 def process(line, ignore_while_loop = False):
-    global __out_function__, __skip_until__, __while_loop__, __in_while_loop__
-    if line.startswith("$") or line == '' or (__skip_until__ and (not line.endswith(__skip_until__))):
+    global __out_function__, __skip_until__, __while_loops__, __in_while_loop__
+    if line.startswith("$") or line == '' or line == "ENDIF;" or (__skip_until__ and (not line.endswith(__skip_until__))):
         if line.endswith("ENDIF;"):
             __skip_until__ = ""
         return
@@ -31,8 +31,8 @@ def process(line, ignore_while_loop = False):
     if __out_function__:
         globals()[__out_function__].append(line.removeprefix('    ').removeprefix('\t'))
         return
-    if __in_while_loop__ and not line == "ENDWHILE;" and not ignore_while_loop:
-        __while_loop__.append(line)
+    if __in_while_loop__ and not line == "ENDWHILE;" and not regex.match("WHILE .*;", line) and not ignore_while_loop:
+        __while_loops__[-1].append(line)
         return
     if regex.match("CALL .*;", line):
         if regex.match("CALL .* ARGS \(.*\);", line):
@@ -93,6 +93,7 @@ def process(line, ignore_while_loop = False):
             __skip_until__ = "ELSE;"
     elif regex.match("WHILE .*;", line):
         globals()['__WHILE_STATEMENT__'] = " ".join(line.split(" ")[1:]).removesuffix(";")
+        __while_loops__.append([])
         __in_while_loop__ = True
     elif line == "ELSE;":
         if __IF_RETURN__:
@@ -101,9 +102,10 @@ def process(line, ignore_while_loop = False):
             __skip_until__ = ""
     elif __in_while_loop__ and line == "ENDWHILE;" and not ignore_while_loop:
         while eval(__WHILE_STATEMENT__):
-            for l in __while_loop__:
+            for l in __while_loops__[-1]:
                 process(l, True)
-        __in_while_loop__ = False
+        __while_loops__.pop()
+        __in_while_loop__ = not not __while_loops__
     elif line == __skip_until__:
         __skip_until__ = ""
     else:
