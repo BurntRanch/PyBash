@@ -5,7 +5,9 @@ INCLUDE sys;
 $ Define the print function
 DEFINE FUNC print;
 
-    CALL input ARGS ("input: ");
+    $ CALL input ARGS ("input: ");
+
+    SET RETURN TO "hi";
 
     $ Hash input
     CALL sha256 ARGS (RETURN.encode());
@@ -22,20 +24,14 @@ DEFINE FUNC print;
     $ if input is equal to the hash of "hi"
     IF hash == "8f434346648f6b96df89dda901c5176b10a6d83961dd3c1ac88b59b2dc327aa4";
 
-        IF True;
-            $ while the counter is less than 10
-            WHILE counter < 10;
+        WHILE counter < 10;
 
-                $ add one to it and call sys.stdout.write
-                INCREMENT counter BY 1;
+            $ add one to it and call sys.stdout.write
+            INCREMENT counter BY 1;
 
-                IF counter <= 5;
-                    CALL sys.stdout.write ARGS (str(counter) + '\n');
-                ENDIF;
+            CALL sys.stdout.write ARGS (str(counter) + '\n');
 
-            ENDWHILE;
-        
-        ENDIF;
+        ENDWHILE;
 
         $ yes
         CALL sys.stdout.write ARGS ("ok im gonna break now\n");

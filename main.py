@@ -26,7 +26,7 @@ def __process_file__(filename):
             process(i)
 
 
-def process(line, __ignore_while_loop__ = False, __ignore_if_statement__ = False):
+def process(line, __ignore_while_loops__ = False, __ignore_if_statements__ = False):
     global __out_function__, __skip_until__, __while_loops__, __in_while_loop__, __if_statements__, __in_if_statement__, __if_layers__
 
     # fix indentation
@@ -45,15 +45,15 @@ def process(line, __ignore_while_loop__ = False, __ignore_if_statement__ = False
     if __out_function__:
         globals_pyasm[__out_function__].append(line)
         return
-    
-    # recording while loop code for execution
-    if __in_while_loop__ and not line == "ENDWHILE;" and not regex.match("WHILE .*;", line) and not __ignore_while_loop__:
-        __while_loops__[-1].append(line)
-        return
 
     # recording if statement code for execution
-    if __in_if_statement__ and not line == "ENDIF;" and not regex.match("IF .*;", line) and not __ignore_if_statement__:
+    if __in_if_statement__ and not line == "ENDIF;" and not regex.match("IF .*;", line) and not __ignore_if_statements__:
         __if_statements__[-1].append(line)
+        return
+    
+    # recording while loop code for execution
+    if __in_while_loop__ and not line == "ENDWHILE;" and not regex.match("WHILE .*;", line) and not __ignore_while_loops__:
+        __while_loops__[-1].append(line)
         return
 
     # regex match for function calls with arguments, etc.
@@ -109,9 +109,8 @@ def process(line, __ignore_while_loop__ = False, __ignore_if_statement__ = False
         __if_cases__.append(" ".join(line.split(" ")[1:]).removesuffix(";"))
         __if_statements__.append([])
         __in_if_statement__ = True
-        __if_layers__ += 1
 
-    elif __in_if_statement__ and line == "ENDIF;" and not __ignore_if_statement__:
+    elif __in_if_statement__ and line == "ENDIF;" and not __ignore_if_statements__:
         __dont_eval__ = False
         for __if_case__ in __if_cases__[:-1]:
             if not eval(__if_case__, globals_pyasm):
@@ -119,7 +118,7 @@ def process(line, __ignore_while_loop__ = False, __ignore_if_statement__ = False
                 break
         if eval(__if_cases__[-1], globals_pyasm) and not __dont_eval__:
             for l in __if_statements__[-1]:
-                process(l, __ignore_while_loop__, True)
+                process(l, __ignore_while_loops__, True)
         
         __if_statements__.pop()
         __if_cases__.pop()
@@ -130,7 +129,7 @@ def process(line, __ignore_while_loop__ = False, __ignore_if_statement__ = False
         __while_loops__.append([])
         __in_while_loop__ = True
         __force_ignore_while__ = True
-    elif __in_while_loop__ and line == "ENDWHILE;" and not __ignore_while_loop__:
+    elif __in_while_loop__ and line == "ENDWHILE;" and not __ignore_while_loops__:
         __dont_eval__ = False
         for __WHILE_STATEMENT__ in __while_statements__[:-1]:
             if not eval(__WHILE_STATEMENT__, globals_pyasm):
@@ -138,7 +137,7 @@ def process(line, __ignore_while_loop__ = False, __ignore_if_statement__ = False
                 break
         while eval(__while_statements__[-1], globals_pyasm) and not __dont_eval__:
             for l in __while_loops__[-1]:
-                process(l, True, __ignore_if_statement__)
+                process(l, True, __ignore_if_statements__)
         __while_loops__.pop()
         __while_statements__.pop()
         __in_while_loop__ = not not __while_loops__
@@ -148,7 +147,9 @@ def process(line, __ignore_while_loop__ = False, __ignore_if_statement__ = False
     else:
         # TO-DO:
         # - use another error instead of this, this is for python.
-        raise SyntaxError(line)
+        if line != "ENDWHILE;" and line != "ENDIF;":
+            raise SyntaxError(line)
+    #breakpoint()
 
 # check if a file is supplied
 if len(sys.argv) < 2:
