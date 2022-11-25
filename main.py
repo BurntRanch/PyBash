@@ -7,7 +7,6 @@ __out_function__ = ""
 __skip_until__ = ""
 __in_while_loop__ = False
 __while_loops__ = []
-layers = 0
 __force_ignore_while__ = False
 __while_statements__ = []
 __if_return__ = False
