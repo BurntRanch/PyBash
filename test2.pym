@@ -1,5 +1,6 @@
 $ Include the sha256 function from the hashlib library
 INCLUDE sha256 FROM hashlib;
+INCLUDE sys;
 
 $ Define the print function
 DEFINE FUNC print;
