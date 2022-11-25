@@ -23,6 +23,8 @@ def __process_file__(filename):
 
 def process(line, __ignore_while_loop__ = False):
     global __out_function__, __skip_until__, __while_loops__, __in_while_loop__, __force_ignore_while__
+    while line.startswith(' ') or line.startswith('\t'):
+        line = line.removeprefix(' ').removeprefix('\t')
     if line.startswith("$") or line == '' or line == "ENDIF;" or (__skip_until__ and (not line.endswith(__skip_until__))):
         if line.endswith("ENDIF;"):
             __skip_until__ = ""
@@ -31,7 +33,7 @@ def process(line, __ignore_while_loop__ = False):
         __out_function__ = ""
         return
     if __out_function__:
-        globals()[__out_function__].append(line.removeprefix('    ').removeprefix('\t'))
+        globals()[__out_function__].append(line)
         return
     if __in_while_loop__ and not line == "ENDWHILE;" and not regex.match("WHILE .*;", line) and not __ignore_while_loop__:
         __while_loops__[-1].append(line)
