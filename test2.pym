@@ -15,9 +15,11 @@ DEFINE FUNC print;
     SET hash TO RETURN;
 
     SET counter TO 0;
+
+    SET exit TO False;
     
     $ if input is equal to the hash of "hi" and the counter is less than or equal to 10
-    IF hash == "8f434346648f6b96df89dda901c5176b10a6d83961dd3c1ac88b59b2dc327aa4";
+    WHILE hash == "8f434346648f6b96df89dda901c5176b10a6d83961dd3c1ac88b59b2dc327aa4" and not exit;
 
     WHILE counter < 10;
     
@@ -27,11 +29,11 @@ DEFINE FUNC print;
 
     ENDWHILE;
 
-    ELSE;
+    CALL sys.stdout.write ARGS ("ok im gonna break now\n");
 
-    CALL sys.stdout.write ARGS ("invalid password :/\n");
+    SET exit TO True;
 
-    ENDIF;
+    ENDWHILE;
 
     DECREMENT counter BY 5;
 
