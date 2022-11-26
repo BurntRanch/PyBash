@@ -2,7 +2,6 @@ import regex
 import sys
 import os
 from helpers.pybash_errors import NoImportFound, TooManyArguments
-from helpers.pybash_warns import Log
 import argparse
 
 __out_function__ = ""
