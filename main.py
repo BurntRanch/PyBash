@@ -2,6 +2,8 @@ import regex
 import sys
 import os
 from helpers.pybash_errors import NoImportFound, TooManyArguments
+from helpers.pybash_warns import Log
+import argparse
 
 __out_function__ = ""
 __skip_until__ = ""
@@ -20,6 +22,7 @@ __if_layers__ = 0
 globals_pybash = {}
 locals_pybash = {}
 __exit_function__ = False
+__min_severity__ = 1
 
 def exit():
     print("Goodbye!")
@@ -73,8 +76,6 @@ def process(line, __ignore_while_loops__ = False, __ignore_if_statements__ = Fal
     # regex match for function calls with arguments, etc.
     if regex.match("CALL .*;", line):
         if regex.match("CALL .* ARGS \(.*\);", line):
-            if " ".join(line.split(" ")[3][:-1]) == "( )":
-                print("WARN: You shouldn't use CALL x ARGS (); to call a function that doesn't take an argument, use CALL x; instead.")
             if isinstance(globals_pybash.get("".join(line.split(" ")[1]).removesuffix(";"), None), list):
                 eval_result = eval(" ".join(line.split(" ")[3:]).removesuffix(';'), globals_pybash, locals_pybash)
                 if isinstance(eval_result, tuple):
@@ -229,5 +230,5 @@ if len(sys.argv) < 2:
         line = input(">> ")
         process(line)
 else:
-    # check format and execute each line
+    # execute each line
     __process_file__(sys.argv[1])

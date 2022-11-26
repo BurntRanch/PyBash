@@ -1,8 +1,7 @@
 $ Include the sha256 function from the hashlib library
 INCLUDE sha256 FROM hashlib;
-$ INCLUDE sys;
 
-$ Define the print function
+$ Define the hash function
 DEFINE FUNC hash ARGS pswd;
 
     $ Hash input
@@ -10,10 +9,6 @@ DEFINE FUNC hash ARGS pswd;
 
     $ hex digest it
     CALL RETURN.hexdigest;
-
-    SET h TO RETURN;
-
-    RETURN h;
 
 $ End of function definition
 EXIT FUNC;
