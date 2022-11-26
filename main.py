@@ -1,7 +1,7 @@
 import regex
 import sys
 import os
-from helpers.pybash_errors import NoImportFound
+from helpers.pybash_errors import NoImportFound, TooManyArguments
 
 __out_function__ = ""
 __skip_until__ = ""
@@ -16,6 +16,7 @@ __if_return__ = False
 __if_layers__ = 0
 globals_pybash = {}
 locals_pybash = {}
+__exit_function__ = False
 
 def exit():
     print("Goodbye!")
@@ -29,14 +30,14 @@ def __process_file__(filename):
 
 
 def process(line, __ignore_while_loops__ = False, __ignore_if_statements__ = False):
-    global __out_function__, __skip_until__, __while_loops__, __in_while_loop__, __if_statements__, __in_if_statement__, __if_layers__, locals_pybash
+    global __out_function__, __skip_until__, __while_loops__, __in_while_loop__, __if_statements__, __in_if_statement__, __if_layers__, locals_pybash, __exit_function__
 
     # fix indentation
     while line.startswith(' ') or line.startswith('\t'):
         line = line.removeprefix(' ').removeprefix('\t')
 
     # check for comments or empty lines, ENDIFs or whether we should skip this code in general
-    if line.startswith("$") or line == '' or (__skip_until__ and (not line.endswith(__skip_until__))):
+    if line.startswith("$") or line == '' or (__skip_until__ and (not line.endswith(__skip_until__))) or __exit_function__:
         return
 
     # some function stuff like recording the function code for execution
@@ -67,16 +68,28 @@ def process(line, __ignore_while_loops__ = False, __ignore_if_statements__ = Fal
             if " ".join(line.split(" ")[3][:-1]) == "( )":
                 print("WARN: You shouldn't use CALL x ARGS (); to call a function that doesn't take an argument, use CALL x; instead.")
             if isinstance(globals_pybash.get("".join(line.split(" ")[1]).removesuffix(";"), None), list):
-                for i, arg in enumerate(eval(" ".join(line.split(" ")[3:]).removesuffix(';'))):
-                    locals_pybash[globals_pybash[line.split(" ")[1]][0][i]] = arg
+                eval_result = eval(" ".join(line.split(" ")[3:]).removesuffix(';'))
+                if isinstance(eval_result, tuple):
+                    for i, arg in enumerate(eval_result):
+                        if globals_pybash[line.split(" ")[1]][0].get(i, None):
+                            locals_pybash[globals_pybash[line.split(" ")[1]][0][i]] = arg
+                        else:
+                            break
+                else:
+                    if len(globals_pybash[line.split(" ")[1]][0]) > 0:
+                        locals_pybash[globals_pybash[line.split(" ")[1]][0][0]] = eval_result
+                    else:
+                        raise TooManyArguments("'" + line + "', You can't pass arguments to a function that takes no arguments.")
                 for code in globals_pybash.get("".join(line.split(" ")[1]), None)[1]:
                     process(code)
+                __exit_function__ = False
             else:
                 exec(f'globals()[\'RETURN\'] = {line.split(" ")[1]}{" ".join(line.split(" ")[3:]).removesuffix(";")}', globals_pybash, locals_pybash)
         else:
             if isinstance(globals_pybash.get("".join(line.split(" ")[1]).removesuffix(";"), None), list):
                 for i in globals_pybash.get("".join(line.split(" ")[1]).removesuffix(";"), None)[1]:
                     process(i)
+                __exit_function__ = False
             else:
                 exec(f'globals()[\'RETURN\'] = {"".join(line.split(" ")[1]).removesuffix(";")}()', globals_pybash, locals_pybash)
     # variable manipulation (we have a sandbox so now we dont have to worry about users overwriting runtime vars!)
@@ -163,6 +176,9 @@ def process(line, __ignore_while_loops__ = False, __ignore_if_statements__ = Fal
         __while_loops__.pop()
         __while_statements__.pop()
         __in_while_loop__ = not not __while_loops__
+    elif regex.match("RETURN .*;", line):
+        globals_pybash['RETURN'] = eval(" ".join(line.split(" ")[1:]).removesuffix(';'))
+        __exit_function__ = True
     # should this code be deleted? i dont think so..
     elif line == __skip_until__:
         __skip_until__ = ""

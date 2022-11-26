@@ -1,9 +1,10 @@
 $ Include the sha256 function from the hashlib library
 INCLUDE sha256 FROM hashlib;
-INCLUDE sys;
+$ INCLUDE sys;
 
 $ Define the print function
-DEFINE FUNC verify ARGS pswd pswd_hash;
+DEFINE FUNC hash ARGS pswd;
+
     $ Hash input
     CALL sha256 ARGS (pswd);
 
@@ -11,17 +12,8 @@ DEFINE FUNC verify ARGS pswd pswd_hash;
     CALL RETURN.hexdigest;
 
     SET hash TO RETURN;
-    
-    $ if input is equal to the hash of "hi"
-    IF hash == pswd_hash;
 
-        CALL sys.stdout.write ARGS ("Correct password!\n");
-
-    ELSE;
-        
-        CALL sys.stdout.write ARGS ("Invalid password!\n");
-
-    ENDIF;
+    RETURN hash;
 
 $ End of function definition
 EXIT FUNC;

@@ -9,4 +9,3 @@ The engine uses Regex to process each line.
 TO-DO list:
 1. Fix a specific edge case where if statements dont work in while cases and vice versa.
 2. For loops
-3. Returning from functions
