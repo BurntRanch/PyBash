@@ -8,6 +8,9 @@ __skip_until__ = ""
 __in_while_loop__ = False
 __while_loops__ = []
 __while_statements__ = []
+__in_for_loop__ = False
+__for_loops__ = []
+__for_statements__ = []
 __if_statements__ = []
 __in_if_statement__ = False
 __if_cases__ = []
@@ -29,8 +32,8 @@ def __process_file__(filename):
             process(i)
 
 
-def process(line, __ignore_while_loops__ = False, __ignore_if_statements__ = False):
-    global __out_function__, __skip_until__, __while_loops__, __in_while_loop__, __if_statements__, __in_if_statement__, __if_layers__, locals_pybash, __exit_function__
+def process(line, __ignore_while_loops__ = False, __ignore_if_statements__ = False, __ignore_for_loops__ = False):
+    global __out_function__, __skip_until__, __while_loops__, __in_while_loop__, __for_loops__, __in_for_loop__, __if_statements__, __in_if_statement__, __if_layers__, locals_pybash, __exit_function__
 
     # fix indentation
     while line.startswith(' ') or line.startswith('\t'):
@@ -60,6 +63,11 @@ def process(line, __ignore_while_loops__ = False, __ignore_if_statements__ = Fal
     # recording while loop code for execution
     if __in_while_loop__ and not line == "ENDWHILE;" and not regex.match("WHILE .*;", line) and not __ignore_while_loops__:
         __while_loops__[-1].append(line)
+        return
+    
+    # recording for loop code for execution
+    if __in_for_loop__ and not line == "ENDFOR;" and not regex.match("FOR .*;", line) and not __ignore_for_loops__:
+        __for_loops__[-1].append(line)
         return
 
     # regex match for function calls with arguments, etc.
@@ -176,6 +184,33 @@ def process(line, __ignore_while_loops__ = False, __ignore_if_statements__ = Fal
         __while_loops__.pop()
         __while_statements__.pop()
         __in_while_loop__ = not not __while_loops__
+    # for loops
+    elif regex.match("FOR .* AS .*;", line):
+        __for_statements__.append([" ".join(line.split("AS")[0].split(" ")[1:]), line.split("AS")[1].split(" ")[-1].removesuffix(';')])
+        __for_loops__.append([])
+        __in_for_loop__ = True
+    elif __in_for_loop__ and line == "ENDFOR;" and not __ignore_for_loops__:
+        __dont_eval__ = False
+        for __FOR_STATEMENT__ in __for_statements__[:-1]:
+            if not eval(__FOR_STATEMENT__[0], globals_pybash, locals_pybash):
+                __dont_eval__ = True
+                break
+        eval_result = eval(__for_statements__[-1][0], globals_pybash, locals_pybash)
+        i = 0
+        for __FOR_RESULT__ in eval_result:
+            for l in __for_loops__[-1]:
+                if isinstance(eval_result, list | tuple):
+                    if len(eval_result) > i:
+                        globals_pybash[__for_statements__[-1][1]] = eval_result[i]
+                    else:
+                        break
+                else:
+                    globals_pybash[__for_statements__[-1][1]] = eval_result
+                process(l, __ignore_while_loops__, __ignore_if_statements__, True)
+                i += 1
+        __for_loops__.pop()
+        __for_statements__.pop()
+        __in_for_loop__ = not not __for_loops__
     elif regex.match("RETURN .*;", line):
         globals_pybash['RETURN'] = eval(" ".join(line.split(" ")[1:]).removesuffix(';'))
         __exit_function__ = True

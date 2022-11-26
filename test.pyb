@@ -2,4 +2,6 @@ INCLUDE test2;
 
 CALL hash ARGS (b'test');
 
-CALL print ARGS (hash);
+FOR list(range(0, 10)) AS i;
+    CALL print ARGS (str(i + 1) + '\t' + hash);
+ENDFOR;
