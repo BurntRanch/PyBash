@@ -1,7 +1,11 @@
 INCLUDE test2;
-CALL hash ARGS (str(i).encode());
+
+$ SET result TO RETURN;
 
 FOR list(range(0, 10)) AS i;
+    CALL hash ARGS (str(i + 1).encode());
+    
     SET result TO RETURN;
+    
     CALL print ARGS (str(i + 1) + '\t' + result);
 ENDFOR;

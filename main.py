@@ -89,7 +89,7 @@ def process(line, __ignore_while_loops__ = False, __ignore_if_statements__ = Fal
                     else:
                         raise TooManyArguments("'" + line + "', You can't pass arguments to a function that takes no arguments.")
                 for code in globals_pybash.get("".join(line.split(" ")[1]), None)[1]:
-                    process(code)
+                    process(code, True, True, True)
                 __exit_function__ = False
             else:
                 exec(f'globals()[\'RETURN\'] = {line.split(" ")[1]}{" ".join(line.split(" ")[3:]).removesuffix(";")}', globals_pybash, locals_pybash)
@@ -198,16 +198,16 @@ def process(line, __ignore_while_loops__ = False, __ignore_if_statements__ = Fal
         eval_result = eval(__for_statements__[-1][0], globals_pybash, locals_pybash)
         i = 0
         for __FOR_RESULT__ in eval_result:
-            for l in __for_loops__[-1]:
-                if isinstance(eval_result, list | tuple):
-                    if len(eval_result) > i:
-                        globals_pybash[__for_statements__[-1][1]] = eval_result[i]
-                    else:
-                        break
+            if isinstance(eval_result, list | tuple):
+                if len(eval_result) > i:
+                    globals_pybash[__for_statements__[-1][1]] = eval_result[i]
                 else:
-                    globals_pybash[__for_statements__[-1][1]] = eval_result
+                    break
+            else:
+                globals_pybash[__for_statements__[-1][1]] = eval_result
+            for l in __for_loops__[-1]:
                 process(l, __ignore_while_loops__, __ignore_if_statements__, True)
-                i += 1
+            i += 1
         __for_loops__.pop()
         __for_statements__.pop()
         __in_for_loop__ = not not __for_loops__
@@ -222,7 +222,6 @@ def process(line, __ignore_while_loops__ = False, __ignore_if_statements__ = Fal
         # - use another error instead of this, this is for python.
         if line != "ENDWHILE;" and line != "ENDIF;":
             raise SyntaxError(line)
-    #breakpoint()
 
 # check if a file is supplied
 if len(sys.argv) < 2:
