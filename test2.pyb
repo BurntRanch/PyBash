@@ -11,9 +11,9 @@ DEFINE FUNC hash ARGS pswd;
     $ hex digest it
     CALL RETURN.hexdigest;
 
-    SET hash TO RETURN;
+    SET h TO RETURN;
 
-    RETURN hash;
+    RETURN h;
 
 $ End of function definition
 EXIT FUNC;

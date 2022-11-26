@@ -33,7 +33,7 @@ def __process_file__(filename):
 
 
 def process(line, __ignore_while_loops__ = False, __ignore_if_statements__ = False, __ignore_for_loops__ = False):
-    global __out_function__, __skip_until__, __while_loops__, __in_while_loop__, __for_loops__, __in_for_loop__, __if_statements__, __in_if_statement__, __if_layers__, locals_pybash, __exit_function__
+    global __out_function__, __skip_until__, __while_loops__, __in_while_loop__, __for_loops__, __in_for_loop__, __if_statements__, __in_if_statement__, __if_layers__, locals_pybash, __exit_function__, globals_pybash, locals_pybash
 
     # fix indentation
     while line.startswith(' ') or line.startswith('\t'):
@@ -76,7 +76,7 @@ def process(line, __ignore_while_loops__ = False, __ignore_if_statements__ = Fal
             if " ".join(line.split(" ")[3][:-1]) == "( )":
                 print("WARN: You shouldn't use CALL x ARGS (); to call a function that doesn't take an argument, use CALL x; instead.")
             if isinstance(globals_pybash.get("".join(line.split(" ")[1]).removesuffix(";"), None), list):
-                eval_result = eval(" ".join(line.split(" ")[3:]).removesuffix(';'))
+                eval_result = eval(" ".join(line.split(" ")[3:]).removesuffix(';'), globals_pybash, locals_pybash)
                 if isinstance(eval_result, tuple):
                     for i, arg in enumerate(eval_result):
                         if globals_pybash[line.split(" ")[1]][0].get(i, None):
@@ -102,7 +102,7 @@ def process(line, __ignore_while_loops__ = False, __ignore_if_statements__ = Fal
                 exec(f'globals()[\'RETURN\'] = {"".join(line.split(" ")[1]).removesuffix(";")}()', globals_pybash, locals_pybash)
     # variable manipulation (we have a sandbox so now we dont have to worry about users overwriting runtime vars!)
     elif regex.match("SET .* TO .*;", line):
-        globals_pybash[line.split(" ")[1]] = eval(" ".join(line.split(" ")[3:]).removesuffix(";"), globals_pybash)
+        globals_pybash[line.split(" ")[1]] = eval(" ".join(line.split(" ")[3:]).removesuffix(";"), globals_pybash, locals_pybash)
     elif regex.match("INCREMENT .* BY .*;", line):
         if line.split(" ")[-1].removesuffix(';').isnumeric():
             globals_pybash[line.split(" ")[1]] += int(line.split(" ")[-1].removesuffix(';'))
@@ -212,7 +212,7 @@ def process(line, __ignore_while_loops__ = False, __ignore_if_statements__ = Fal
         __for_statements__.pop()
         __in_for_loop__ = not not __for_loops__
     elif regex.match("RETURN .*;", line):
-        globals_pybash['RETURN'] = eval(" ".join(line.split(" ")[1:]).removesuffix(';'))
+        globals_pybash['RETURN'] = eval(" ".join(line.split(" ")[1:]).removesuffix(';'), globals_pybash, locals_pybash)
         __exit_function__ = True
     # should this code be deleted? i dont think so..
     elif line == __skip_until__:
