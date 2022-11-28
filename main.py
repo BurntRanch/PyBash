@@ -1,4 +1,3 @@
-import regex
 import sys
 import os
 from helpers.pybash_errors import NoImportFound, TooManyArguments

@@ -7,4 +7,4 @@ It is designed to help shell scripters be more experienced with python and other
 The engine uses match-case code to process each line.
 
 TO-DO list:
-1. Performance fix (pybash is 908.3% slower than python...)
+1. Performance fix (pybash is 833.3% slower than python...)
