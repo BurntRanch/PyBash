@@ -54,7 +54,7 @@ def process(line, __ignore_while_loops__ = False, __ignore_if_statements__ = Fal
         return
 
     # recording if statement code for execution
-    if __in_if_statement__ and not line == "ENDIF;" and not line == "ELSE;" and not regex.match("IF .*;", line) and not __ignore_if_statements__:
+    if __in_if_statement__ and not line == "ENDIF;" and not line == "ELSE;" and not line.startswith('IF') and not __ignore_if_statements__:
         if not __has_else__[-1][0]:
             __if_statements__[-1].append(line)
         else:
@@ -62,12 +62,12 @@ def process(line, __ignore_while_loops__ = False, __ignore_if_statements__ = Fal
         return
     
     # recording while loop code for execution
-    if __in_while_loop__ and not line == "ENDWHILE;" and not regex.match("WHILE .*;", line) and not __ignore_while_loops__:
+    if __in_while_loop__ and not line == "ENDWHILE;" and not line.startswith('WHILE') and not __ignore_while_loops__:
         __while_loops__[-1].append(line)
         return
     
     # recording for loop code for execution
-    if __in_for_loop__ and not line == "ENDFOR;" and not regex.match("FOR .*;", line) and not __ignore_for_loops__:
+    if __in_for_loop__ and not line == "ENDFOR;" and not line.startswith('FOR') and not __ignore_for_loops__:
         __for_loops__[-1].append(line)
         return
 
