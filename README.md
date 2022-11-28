@@ -7,4 +7,4 @@ It is designed to help shell scripters be more experienced with python and other
 The engine uses Regex to process each line.
 
 TO-DO list:
-1. Fix a specific edge case where if statements dont work in while cases and vice versa.
+1. None (i didnt even fix anything??? lmao)

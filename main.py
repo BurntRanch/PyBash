@@ -2,7 +2,6 @@ import regex
 import sys
 import os
 from helpers.pybash_errors import NoImportFound, TooManyArguments
-import argparse
 
 __out_function__ = ""
 __skip_until__ = ""
@@ -157,10 +156,10 @@ def process(line, __ignore_while_loops__ = False, __ignore_if_statements__ = Fal
 
         if eval(__if_cases__[-1], globals_pybash, locals_pybash) and not __dont_eval__:
             for l in __if_statements__[-1]:
-                process(l, __ignore_while_loops__, True)
+                process(l, __ignore_while_loops__, True, __ignore_for_loops__)
         elif __has_else__[-1][0]:
             for l in __has_else__[-1][1]:
-                process(l, __ignore_while_loops__, True)
+                process(l, __ignore_while_loops__, True, __ignore_for_loops__)
         
         __if_statements__.pop()
         __if_cases__.pop()
