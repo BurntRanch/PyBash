@@ -1,28 +1,12 @@
-INCLUDE test2;
+INCLUDE sha256 FROM hashlib;
 
 $ SET result TO RETURN;
 
 SET counter TO 0;
 
-$ this is a QA test, it will hash numbers 1-10 exactly 10 times, and if ihe number is less than 5, it will hash it, otherwise it will print the result is above 5.
-WHILE counter < 10;
-    FOR list(range(0, 10)) AS i;
+$ this is a speed test, it will hash numbers from 1 to 5k.
+FOR list(range(1, 5000)) AS i;
 
-        IF (i + 1) <= 5;
-            CALL hash ARGS (str(i + 1).encode());
-            
-            SET result TO RETURN;
-            
-            CALL print ARGS (str(i + 1) + '\t' + result);
-        
-        ELSE;
-
-            CALL print ARGS (str(i + 1) + '\tResult is above 5!');
-
-        ENDIF;
-        
-    ENDFOR;
-
-INCREMENT counter BY 1;
-
-ENDWHILE;
+    CALL sha256 ARGS (str(i).encode());
+    
+ENDFOR;

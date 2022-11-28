@@ -7,4 +7,4 @@ It is designed to help shell scripters be more experienced with python and other
 The engine uses Regex to process each line.
 
 TO-DO list:
-1. None (i didnt even fix anything??? lmao)
+1. Performance fix (pybash is 1607.7% slower than python...)
