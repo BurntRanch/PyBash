@@ -72,155 +72,156 @@ def process(line, __ignore_while_loops__ = False, __ignore_if_statements__ = Fal
         return
 
     # regex match for function calls with arguments, etc.
-    if regex.match("CALL .*;", line):
-        if regex.match("CALL .* ARGS \(.*\);", line):
-            if isinstance(globals_pybash.get("".join(line.split(" ")[1]).removesuffix(";"), None), list):
-                eval_result = eval(" ".join(line.split(" ")[3:]).removesuffix(';'), globals_pybash, locals_pybash)
+    match line.split(' '):
+        case ['CALL', function, 'ARGS', *args]:
+            if isinstance(globals_pybash.get("".join(function).removesuffix(";"), None), list):
+                eval_result = eval(" ".join(args).removesuffix(';'), globals_pybash, locals_pybash)
                 if isinstance(eval_result, tuple):
                     for i, arg in enumerate(eval_result):
-                        if globals_pybash[line.split(" ")[1]][0].get(i, None):
-                            locals_pybash[globals_pybash[line.split(" ")[1]][0][i]] = arg
+                        if globals_pybash[function][0].get(i, None):
+                            locals_pybash[globals_pybash[function][0][i]] = arg
                         else:
                             break
                 else:
-                    if len(globals_pybash[line.split(" ")[1]][0]) > 0:
-                        locals_pybash[globals_pybash[line.split(" ")[1]][0][0]] = eval_result
+                    if len(globals_pybash[function][0]) > 0:
+                        locals_pybash[globals_pybash[function][0][0]] = eval_result
                     else:
                         raise TooManyArguments("'" + line + "', You can't pass arguments to a function that takes no arguments.")
-                for code in globals_pybash.get("".join(line.split(" ")[1]), None)[1]:
+                for code in globals_pybash.get("".join(function), None)[1]:
                     process(code, True, True, True)
                 __exit_function__ = False
             else:
-                exec(f'globals()[\'RETURN\'] = {line.split(" ")[1]}{" ".join(line.split(" ")[3:]).removesuffix(";")}', globals_pybash, locals_pybash)
-        else:
-            if isinstance(globals_pybash.get("".join(line.split(" ")[1]).removesuffix(";"), None), list):
-                for i in globals_pybash.get("".join(line.split(" ")[1]).removesuffix(";"), None)[1]:
+                exec(f'globals()[\'RETURN\'] = {function}{" ".join(args).removesuffix(";")}', globals_pybash, locals_pybash)
+        case ['CALL', *function]:
+            if isinstance(globals_pybash.get("-".join(function).removesuffix(";"), None), list):
+                for i in globals_pybash.get("-".join(function).removesuffix(";"), None)[1]:
                     process(i)
                 __exit_function__ = False
             else:
-                exec(f'globals()[\'RETURN\'] = {"".join(line.split(" ")[1]).removesuffix(";")}()', globals_pybash, locals_pybash)
-    # variable manipulation (we have a sandbox so now we dont have to worry about users overwriting runtime vars!)
-    elif regex.match("SET .* TO .*;", line):
-        globals_pybash[line.split(" ")[1]] = eval(" ".join(line.split(" ")[3:]).removesuffix(";"), globals_pybash, locals_pybash)
-    elif regex.match("INCREMENT .* BY .*;", line):
-        if line.split(" ")[-1].removesuffix(';').isnumeric():
-            globals_pybash[line.split(" ")[1]] += int(line.split(" ")[-1].removesuffix(';'))
-    elif regex.match("DECREMENT .* BY .*;", line):
-        if line.split(" ")[-1].removesuffix(';').isnumeric():
-            globals_pybash[line.split(" ")[1]] -= int(line.split(" ")[-1].removesuffix(';'))
-    # memory management
-    elif regex.match("DELETE VAR .*;", line):
-        del globals_pybash[line.split(" ")[2].removesuffix(";")]
-    elif regex.match("DELETE FUNC .*;", line):
-        del globals_pybash[line.split(" ")[2].removesuffix(";")]
-    # function definition, it just records the code so we can evaluate each line eventually
-    elif regex.match("DEFINE FUNC .*;", line):
-        __out_function__ = line.split(" ")[2].removesuffix(";")
-        globals_pybash[__out_function__] = [{}, []]
-        if regex.match("DEFINE FUNC .* ARGS .*;", line):
-            for i, arg in enumerate(line.split(" ")[4:]):
-                if i == len(line.split(" ")[4:]) - 1:
+                exec(f'globals()[\'RETURN\'] = {"-".join(function).removesuffix(";")}()', globals_pybash, locals_pybash)
+        # variable manipulation (we have a sandbox so now we dont have to worry about users overwriting runtime vars!)
+        case ['SET', variable, 'TO', *value]:
+            globals_pybash[variable] = eval(" ".join(value).removesuffix(';'), globals_pybash, locals_pybash)
+        case ['INCREMENT', variable, 'BY', amount]:
+            if amount.removesuffix(';').isnumeric():
+                globals_pybash[variable] += int(amount)
+        case ['DECREMENT', variable, 'BY', amount]:
+            if amount.removesuffix(';').isnumeric():
+                globals_pybash[variable] -= int(amount.removesuffix(';'))
+        # memory management
+        case ['DELETE', *variable]:
+            del globals_pybash["-".join(variable).removesuffix(";")]
+        # function definition, it just records the code so we can evaluate each line eventually
+        case ['DEFINE', 'FUNC', function, 'ARGS', *args]:
+            __out_function__ = function.removesuffix(";")
+            globals_pybash[__out_function__] = [{}, []]
+            for i, arg in enumerate(args):
+                if i == len(args) - 1:
                     globals_pybash[__out_function__][0][i] = arg.removesuffix(";")
                 else:
                     globals_pybash[__out_function__][0][i] = arg
-                    
-    # importing
-    elif regex.match("INCLUDE .*;", line):
-        if regex.match("INCLUDE .* FROM .*;", line):
+        case ['DEFINE', 'FUNC', *function]:
+            __out_function__ = "-".join(function).removesuffix(";")
+            globals_pybash[__out_function__] = [{}, []]
+                        
+        # importing
+        case ['INCLUDE', obj, 'FROM', library]:
             try:
-                exec(f'from {line.split(" ")[3].removesuffix(";")} import {line.split(" ")[1]}', globals_pybash)
+                exec(f'from {library.removesuffix(";")} import {obj}', globals_pybash)
             except ImportError:
                 raise NoImportFound()
-        else:
-            if os.path.exists(f'{line.split(" ")[1].removesuffix(";")}.pyb'):
-                __process_file__(f'{line.split(" ")[1].removesuffix(";")}.pyb')
+        case ['INCLUDE', library]:
+            if os.path.exists(f'{library.removesuffix(";")}.pyb'):
+                __process_file__(f'{library.removesuffix(";")}.pyb')
             else:
                 try:
-                    exec(f'import {line.split(" ")[1].removesuffix(";")}', globals_pybash)
+                    exec(f'import {library.removesuffix(";")}', globals_pybash)
                 except ImportError:
                     raise NoImportFound()
-    # ah yes, if statements.
-    elif regex.match("IF .*;", line):
-        __if_cases__.append(" ".join(line.split(" ")[1:]).removesuffix(";"))
-        __if_statements__.append([])
-        __has_else__.append([False, []])
-        __in_if_statement__ = True
-    elif line == "ELSE;":
-        __has_else__[-1][0] = True
-    elif __in_if_statement__ and line == "ENDIF;" and not __ignore_if_statements__:
-        __dont_eval__ = False
-        for i, __if_case__ in enumerate(__if_cases__[:-1]):
-            if not eval(__if_case__, globals_pybash, locals_pybash):
-                __dont_eval__ = True
-                break
+        # ah yes, if statements.
+        case ['IF', *statement]:
+            __if_cases__.append(" ".join(statement).removesuffix(";"))
+            __if_statements__.append([])
+            __has_else__.append([False, []])
+            __in_if_statement__ = True
+        case ["ELSE;"]:
+            __has_else__[-1][0] = True
+        case ["ENDIF;"]:
+            if __in_if_statement__ and not __ignore_if_statements__:
+                __dont_eval__ = False
+                for i, __if_case__ in enumerate(__if_cases__[:-1]):
+                    if not eval(__if_case__, globals_pybash, locals_pybash):
+                        __dont_eval__ = True
+                        break
 
-        if eval(__if_cases__[-1], globals_pybash, locals_pybash) and not __dont_eval__:
-            for l in __if_statements__[-1]:
-                process(l, __ignore_while_loops__, True, __ignore_for_loops__)
-        elif __has_else__[-1][0]:
-            for l in __has_else__[-1][1]:
-                process(l, __ignore_while_loops__, True, __ignore_for_loops__)
-        
-        __if_statements__.pop()
-        __if_cases__.pop()
-        __has_else__.pop()
-        __in_if_statement__ = not not __if_statements__
-    # while loops
-    elif regex.match("WHILE .*;", line):
-        __while_statements__.append(" ".join(line.split(" ")[1:]).removesuffix(";"))
-        __while_loops__.append([])
-        __in_while_loop__ = True
-        __force_ignore_while__ = True
-    elif __in_while_loop__ and line == "ENDWHILE;" and not __ignore_while_loops__:
-        __dont_eval__ = False
-        for __WHILE_STATEMENT__ in __while_statements__[:-1]:
-            if not eval(__WHILE_STATEMENT__, globals_pybash, locals_pybash):
-                __dont_eval__ = True
-                break
-        while eval(__while_statements__[-1], globals_pybash, locals_pybash) and not __dont_eval__:
-            for l in __while_loops__[-1]:
-                process(l, True, __ignore_if_statements__)
-        __while_loops__.pop()
-        __while_statements__.pop()
-        __in_while_loop__ = not not __while_loops__
-    # for loops
-    elif regex.match("FOR .* AS .*;", line):
-        __for_statements__.append([" ".join(line.split("AS")[0].split(" ")[1:]), line.split("AS")[1].split(" ")[-1].removesuffix(';')])
-        __for_loops__.append([])
-        __in_for_loop__ = True
-    elif __in_for_loop__ and line == "ENDFOR;" and not __ignore_for_loops__:
-        __dont_eval__ = False
-        for __FOR_STATEMENT__ in __for_statements__[:-1]:
-            if not eval(__FOR_STATEMENT__[0], globals_pybash, locals_pybash):
-                __dont_eval__ = True
-                break
-        eval_result = eval(__for_statements__[-1][0], globals_pybash, locals_pybash)
-        i = 0
-        for __FOR_RESULT__ in eval_result:
-            if isinstance(eval_result, list | tuple):
-                if len(eval_result) > i:
-                    globals_pybash[__for_statements__[-1][1]] = eval_result[i]
-                else:
-                    break
+                if eval(__if_cases__[-1], globals_pybash, locals_pybash) and not __dont_eval__:
+                    for l in __if_statements__[-1]:
+                        process(l, __ignore_while_loops__, True, __ignore_for_loops__)
+                elif __has_else__[-1][0]:
+                    for l in __has_else__[-1][1]:
+                        process(l, __ignore_while_loops__, True, __ignore_for_loops__)
+                
+                __if_statements__.pop()
+                __if_cases__.pop()
+                __has_else__.pop()
+                __in_if_statement__ = not not __if_statements__
+        # while loops
+        case ['WHILE', *statement]:
+            __while_statements__.append(" ".join(statement).removesuffix(";"))
+            __while_loops__.append([])
+            __in_while_loop__ = True
+            __force_ignore_while__ = True
+        case ["ENDWHILE;"]:
+            if __in_while_loop__ and not __ignore_while_loops__:
+                __dont_eval__ = False
+                for __WHILE_STATEMENT__ in __while_statements__[:-1]:
+                    if not eval(__WHILE_STATEMENT__, globals_pybash, locals_pybash):
+                        __dont_eval__ = True
+                        break
+                while eval(__while_statements__[-1], globals_pybash, locals_pybash) and not __dont_eval__:
+                    for l in __while_loops__[-1]:
+                        process(l, True, __ignore_if_statements__)
+                __while_loops__.pop()
+                __while_statements__.pop()
+                __in_while_loop__ = not not __while_loops__
+        # for loops
+        case ['FOR', *statement, 'AS', variable]:
+            __for_statements__.append([" ".join(statement), variable.removesuffix(';')])
+            __for_loops__.append([])
+            __in_for_loop__ = True
+        case ["ENDFOR;"]:
+            if __in_for_loop__ and not __ignore_for_loops__:
+                __dont_eval__ = False
+                for __FOR_STATEMENT__ in __for_statements__[:-1]:
+                    if not eval(__FOR_STATEMENT__[0], globals_pybash, locals_pybash):
+                        __dont_eval__ = True
+                        break
+                eval_result = eval(__for_statements__[-1][0], globals_pybash, locals_pybash)
+                i = 0
+                for __FOR_RESULT__ in eval_result:
+                    if isinstance(eval_result, list | tuple):
+                        if len(eval_result) > i:
+                            globals_pybash[__for_statements__[-1][1]] = eval_result[i]
+                        else:
+                            break
+                    else:
+                        globals_pybash[__for_statements__[-1][1]] = eval_result
+                    for l in __for_loops__[-1]:
+                        process(l, __ignore_while_loops__, __ignore_if_statements__, True)
+                    i += 1
+                __for_loops__.pop()
+                __for_statements__.pop()
+                __in_for_loop__ = not not __for_loops__
+        case ['RETURN', *to_return]:
+            globals_pybash['RETURN'] = eval(" ".join(to_return).removesuffix(';'), globals_pybash, locals_pybash)
+            __exit_function__ = True
+        case other:
+            # should this code be deleted? i dont think so..
+            if line == __skip_until__:
+                __skip_until__ = ""
             else:
-                globals_pybash[__for_statements__[-1][1]] = eval_result
-            for l in __for_loops__[-1]:
-                process(l, __ignore_while_loops__, __ignore_if_statements__, True)
-            i += 1
-        __for_loops__.pop()
-        __for_statements__.pop()
-        __in_for_loop__ = not not __for_loops__
-    elif regex.match("RETURN .*;", line):
-        globals_pybash['RETURN'] = eval(" ".join(line.split(" ")[1:]).removesuffix(';'), globals_pybash, locals_pybash)
-        __exit_function__ = True
-    # should this code be deleted? i dont think so..
-    elif line == __skip_until__:
-        __skip_until__ = ""
-    else:
-        # TO-DO:
-        # - use another error instead of this, this is for python.
-        if line != "ENDWHILE;" and line != "ENDIF;":
-            raise SyntaxError(line)
+                if line != "ENDWHILE;" and line != "ENDIF;":
+                    raise SyntaxError(line)
 
 # check if a file is supplied
 if len(sys.argv) < 2:
