@@ -1,12 +1,12 @@
-INCLUDE sha256 FROM hashlib;
-
-$ SET result TO RETURN;
-
-SET counter TO 0;
+INCLUDE test2;
 
 $ this is a speed test, it will hash numbers from 1 to 5k.
-FOR list(range(1, 5000)) AS i;
+WHILE True;
 
-    CALL sha256 ARGS (str(i).encode());
+    CALL test2.hash_pswd ARGS (str(input("insert value to hash: ")).encode());
     
-ENDFOR;
+    CALL print ARGS (RETURN);
+
+    BREAK;
+
+ENDWHILE;

@@ -22,14 +22,14 @@ def exit():
     print("Goodbye!")
     sys.exit(0)
 
-def __process_file__(filename):
+def __process_file__(filename, prefix = ''):
     with open(filename, 'r') as f:
         lines = f.read().splitlines()
         for i in lines:
-            process(i)
+            process(i, prefix=prefix)
 
 
-def process(line: str, __ignore_while_loops__: bool = False, __ignore_if_statements__: bool = False, __ignore_for_loops__: bool = False) -> None:
+def process(line: str, __ignore_while_loops__: bool = False, __ignore_if_statements__: bool = False, __ignore_for_loops__: bool = False, prefix: str = '') -> None:
     global __out_function__, __while_loops__, __in_while_loop__, __for_loops__, __in_for_loop__, __if_statements__, __in_if_statement__, locals_pybash, __exit_function__, globals_pybash
 
     # fix indentation
@@ -46,7 +46,7 @@ def process(line: str, __ignore_while_loops__: bool = False, __ignore_if_stateme
         return
 
     if __out_function__:
-        globals_pybash[__out_function__][1].append(line)
+        globals_pybash[prefix + __out_function__][1].append(line)
         return
 
     # recording if statement code for execution
@@ -97,29 +97,28 @@ def process(line: str, __ignore_while_loops__: bool = False, __ignore_if_stateme
                 exec(f'globals()[\'RETURN\'] = {"-".join(function).removesuffix(";")}()', globals_pybash, locals_pybash)
         # variable manipulation (we have a sandbox so now we dont have to worry about users overwriting runtime vars!)
         case ['SET', variable, 'TO', *value]:
-            globals_pybash[variable] = eval(" ".join(value).removesuffix(';'), globals_pybash, locals_pybash)
+            globals_pybash[prefix + variable] = eval(" ".join(value).removesuffix(';'), globals_pybash, locals_pybash)
         case ['INCREMENT', variable, 'BY', amount]:
             if amount.removesuffix(';').isnumeric():
-                globals_pybash[variable] += int(amount)
+                globals_pybash[prefix + variable] += int(amount)
         case ['DECREMENT', variable, 'BY', amount]:
             if amount.removesuffix(';').isnumeric():
-                globals_pybash[variable] -= int(amount.removesuffix(';'))
+                globals_pybash[prefix + variable] -= int(amount.removesuffix(';'))
         # memory management
         case ['DELETE', *variable]:
-            del globals_pybash["-".join(variable).removesuffix(";")]
+            del globals_pybash["-".join(prefix + variable).removesuffix(";")]
         # function definition, it just records the code so we can evaluate each line eventually
         case ['DEFINE', 'FUNC', function, 'ARGS', *args]:
             __out_function__ = function.removesuffix(";")
-            globals_pybash[__out_function__] = [{}, []]
+            globals_pybash[prefix + __out_function__] = [{}, []]
             for i, arg in enumerate(args):
                 if i == len(args) - 1:
-                    globals_pybash[__out_function__][0][i] = arg.removesuffix(";")
+                    globals_pybash[prefix + __out_function__][0][i] = arg.removesuffix(";")
                 else:
-                    globals_pybash[__out_function__][0][i] = arg
+                    globals_pybash[prefix + __out_function__][0][i] = arg
         case ['DEFINE', 'FUNC', *function]:
             __out_function__ = "-".join(function).removesuffix(";")
-            globals_pybash[__out_function__] = [{}, []]
-                        
+            globals_pybash[prefix + __out_function__] = [{}, []]
         # importing
         case ['INCLUDE', obj, 'FROM', library]:
             try:
@@ -128,7 +127,7 @@ def process(line: str, __ignore_while_loops__: bool = False, __ignore_if_stateme
                 raise NoImportFound()
         case ['INCLUDE', library]:
             if os.path.exists(f'{library.removesuffix(";")}.pyb'):
-                __process_file__(f'{library.removesuffix(";")}.pyb')
+                __process_file__(f'{library.removesuffix(";")}.pyb', library.removesuffix(';') + '.')
             else:
                 try:
                     exec(f'import {library.removesuffix(";")}', globals_pybash)
@@ -176,7 +175,11 @@ def process(line: str, __ignore_while_loops__: bool = False, __ignore_if_stateme
                         break
                 while eval(__while_statements__[-1], globals_pybash, locals_pybash) and not __dont_eval__:
                     for l in __while_loops__[-1]:
-                        process(l, True, __ignore_if_statements__)
+                        if l != 'BREAK;':
+                            process(l, True, __ignore_if_statements__)
+                        else:
+                            __dont_eval__ = True
+                            break
                 __while_loops__.pop()
                 __while_statements__.pop()
                 __in_while_loop__ = not not __while_loops__
@@ -195,16 +198,23 @@ def process(line: str, __ignore_while_loops__: bool = False, __ignore_if_stateme
                 eval_result = eval(__for_statements__[-1][0], globals_pybash, locals_pybash)
                 i = 0
                 for __FOR_RESULT__ in eval_result:
-                    if isinstance(eval_result, list | tuple):
-                        if len(eval_result) > i:
-                            globals_pybash[__for_statements__[-1][1]] = eval_result[i]
+                    if not __dont_eval__:
+                        if isinstance(eval_result, list | tuple):
+                            if len(eval_result) > i:
+                                globals_pybash[__for_statements__[-1][1]] = eval_result[i]
+                            else:
+                                break
                         else:
-                            break
+                            globals_pybash[__for_statements__[-1][1]] = eval_result
+                        for l in __for_loops__[-1]:
+                            if l != 'BREAK;':
+                                process(l, __ignore_while_loops__, __ignore_if_statements__, True)
+                            else:
+                                __dont_eval__ = True
+                                break
+                        i += 1
                     else:
-                        globals_pybash[__for_statements__[-1][1]] = eval_result
-                    for l in __for_loops__[-1]:
-                        process(l, __ignore_while_loops__, __ignore_if_statements__, True)
-                    i += 1
+                        break
                 __for_loops__.pop()
                 __for_statements__.pop()
                 __in_for_loop__ = not not __for_loops__

@@ -2,13 +2,17 @@ $ Include the sha256 function from the hashlib library
 INCLUDE sha256 FROM hashlib;
 
 $ Define the hash function
-DEFINE FUNC hash ARGS pswd;
+DEFINE FUNC hash_pswd ARGS pswd;
 
     $ Hash input
     CALL sha256 ARGS (pswd);
 
     $ hex digest it
     CALL RETURN.hexdigest;
+
+    SET test TO RETURN;
+
+    RETURN test;
 
 $ End of function definition
 EXIT FUNC;
