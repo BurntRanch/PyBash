@@ -3,7 +3,6 @@ import os
 from helpers.pybash_errors import NoImportFound, TooManyArguments
 
 __out_function__ = ""
-__skip_until__ = ""
 __in_while_loop__ = False
 __while_loops__ = []
 __while_statements__ = []
@@ -15,11 +14,9 @@ __in_if_statement__ = False
 __if_cases__ = []
 __has_else__ = []
 __if_return__ = False
-__if_layers__ = 0
 globals_pybash = {}
 locals_pybash = {}
 __exit_function__ = False
-__min_severity__ = 1
 
 def exit():
     print("Goodbye!")
@@ -32,15 +29,15 @@ def __process_file__(filename):
             process(i)
 
 
-def process(line, __ignore_while_loops__ = False, __ignore_if_statements__ = False, __ignore_for_loops__ = False):
-    global __out_function__, __skip_until__, __while_loops__, __in_while_loop__, __for_loops__, __in_for_loop__, __if_statements__, __in_if_statement__, __if_layers__, locals_pybash, __exit_function__, globals_pybash, locals_pybash
+def process(line: str, __ignore_while_loops__: bool = False, __ignore_if_statements__: bool = False, __ignore_for_loops__: bool = False) -> None:
+    global __out_function__, __while_loops__, __in_while_loop__, __for_loops__, __in_for_loop__, __if_statements__, __in_if_statement__, locals_pybash, __exit_function__, globals_pybash
 
     # fix indentation
     while line.startswith(' ') or line.startswith('\t'):
         line = line.removeprefix(' ').removeprefix('\t')
 
     # check for comments or empty lines, ENDIFs or whether we should skip this code in general
-    if line.startswith("$") or line == '' or (__skip_until__ and (not line.endswith(__skip_until__))) or __exit_function__:
+    if line.startswith("$") or line == '' or __exit_function__:
         return
 
     # some function stuff like recording the function code for execution
@@ -215,12 +212,8 @@ def process(line, __ignore_while_loops__ = False, __ignore_if_statements__ = Fal
             globals_pybash['RETURN'] = eval(" ".join(to_return).removesuffix(';'), globals_pybash, locals_pybash)
             __exit_function__ = True
         case other:
-            # should this code be deleted? i dont think so..
-            if line == __skip_until__:
-                __skip_until__ = ""
-            else:
-                if line != "ENDWHILE;" and line != "ENDIF;":
-                    raise SyntaxError(line)
+            if line != "ENDWHILE;" and line != "ENDIF;":
+                raise SyntaxError(line)
 
 # check if a file is supplied
 if len(sys.argv) < 2:
