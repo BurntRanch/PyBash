@@ -38,7 +38,7 @@ def pyBashEval(line: str):
         line = line.removeprefix(' ').removeprefix('\t')
     match line.split(' '):
         case ['CALL', function, 'ARGS', *args]:
-            if isinstance(globals_pybash.get("".join(function).removesuffix(";"), None), list):
+            if isinstance(globals_pybash.get("".join(function).removesuffix(";"), None), pyBashFunction):
                 i = 0
                 for arg in " ".join(args).removesuffix(';').split(','):
                     if globals_pybash[function][0].get(i, None):
@@ -53,7 +53,7 @@ def pyBashEval(line: str):
                 exec(f'globals()[\'RETURN\'] = {function}{" ".join(args).removesuffix(";")}', globals_pybash, locals_pybash)
             return globals_pybash['RETURN']
         case ['CALL', *function]:
-            if isinstance(globals_pybash.get("-".join(function).removesuffix(";"), None), list):
+            if isinstance(globals_pybash.get("-".join(function).removesuffix(";"), None), pyBashFunction):
                 for i in globals_pybash.get("-".join(function).removesuffix(";"), None)[1]:
                     process(i)
                 __exit_function__ = False
@@ -105,7 +105,7 @@ def process(line: str, __ignore_while_loops__: bool = False, __ignore_if_stateme
     # regex match for function calls with arguments, etc.
     match line.split(' '):
         case ['CALL', function, 'ARGS', *args]:
-            if isinstance(globals_pybash.get("".join(function).removesuffix(";"), None), list):
+            if isinstance(globals_pybash.get("".join(function).removesuffix(";"), None), pyBashFunction):
                 i = 0
                 for arg in " ".join(args).removesuffix(';').split(','):
                     if globals_pybash[function][0].get(i, None):
@@ -119,7 +119,7 @@ def process(line: str, __ignore_while_loops__: bool = False, __ignore_if_stateme
             else:
                 exec(f'globals()[\'RETURN\'] = {function}{" ".join(args).removesuffix(";")}', globals_pybash, locals_pybash)
         case ['CALL', *function]:
-            if isinstance(globals_pybash.get("-".join(function).removesuffix(";"), None), list):
+            if isinstance(globals_pybash.get("-".join(function).removesuffix(";"), None), pyBashFunction):
                 for i in globals_pybash.get("-".join(function).removesuffix(";"), None)[1]:
                     process(i)
                 __exit_function__ = False
