@@ -1,12 +1,8 @@
 INCLUDE test2;
+INCLUDE token_bytes FROM secrets;
 
-$ this is a speed test, it will hash numbers from 1 to 5k.
-WHILE True;
+$ this is a syntax test, it will hash a random token
+$ if you notice closely, the argument is a PyBash(!) expression
+CALL test2.hash_pswd ARGS (CALL token_bytes);
 
-    CALL test2.hash_pswd ARGS (str(input("insert value to hash: ")).encode());
-    
-    CALL print ARGS (RETURN);
-
-    BREAK;
-
-ENDWHILE;
+CALL print ARGS (RETURN);

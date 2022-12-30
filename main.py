@@ -1,6 +1,7 @@
 import sys
 import os
 from helpers.pybash_errors import NoImportFound, TooManyArguments
+from typing import Iterable
 
 __out_function__ = ""
 __in_while_loop__ = False
@@ -28,6 +29,40 @@ def __process_file__(filename, prefix = ''):
         for i in lines:
             process(i, prefix=prefix)
 
+class pyBashFunction(list):
+    pass
+
+def pyBashEval(line: str):
+    # fix indentation
+    while line.startswith(' ') or line.startswith('\t'):
+        line = line.removeprefix(' ').removeprefix('\t')
+    match line.split(' '):
+        case ['CALL', function, 'ARGS', *args]:
+            if isinstance(globals_pybash.get("".join(function).removesuffix(";"), None), list):
+                i = 0
+                for arg in " ".join(args).removesuffix(';').split(','):
+                    if globals_pybash[function][0].get(i, None):
+                        locals_pybash[globals_pybash[function][0][i]] = pyBashEval(arg)
+                    else:
+                        break
+                    i += 1
+                for code in globals_pybash.get("".join(function), None)[1]:
+                    process(code, True, True, True)
+                __exit_function__ = False
+            else:
+                exec(f'globals()[\'RETURN\'] = {function}{" ".join(args).removesuffix(";")}', globals_pybash, locals_pybash)
+            return globals_pybash['RETURN']
+        case ['CALL', *function]:
+            if isinstance(globals_pybash.get("-".join(function).removesuffix(";"), None), list):
+                for i in globals_pybash.get("-".join(function).removesuffix(";"), None)[1]:
+                    process(i)
+                __exit_function__ = False
+            else:
+                exec(f'globals()[\'RETURN\'] = {"-".join(function).removesuffix(";")}()', globals_pybash, locals_pybash)
+            return globals_pybash['RETURN']
+        case [variable]:
+            if variable in globals_pybash:
+                return globals_pybash[variable]
 
 def process(line: str, __ignore_while_loops__: bool = False, __ignore_if_statements__: bool = False, __ignore_for_loops__: bool = False, prefix: str = '') -> None:
     global __out_function__, __while_loops__, __in_while_loop__, __for_loops__, __in_for_loop__, __if_statements__, __in_if_statement__, locals_pybash, __exit_function__, globals_pybash
@@ -71,18 +106,13 @@ def process(line: str, __ignore_while_loops__: bool = False, __ignore_if_stateme
     match line.split(' '):
         case ['CALL', function, 'ARGS', *args]:
             if isinstance(globals_pybash.get("".join(function).removesuffix(";"), None), list):
-                eval_result = eval(" ".join(args).removesuffix(';'), globals_pybash, locals_pybash)
-                if isinstance(eval_result, tuple):
-                    for i, arg in enumerate(eval_result):
-                        if globals_pybash[function][0].get(i, None):
-                            locals_pybash[globals_pybash[function][0][i]] = arg
-                        else:
-                            break
-                else:
-                    if len(globals_pybash[function][0]) > 0:
-                        locals_pybash[globals_pybash[function][0][0]] = eval_result
+                i = 0
+                for arg in " ".join(args).removesuffix(';').split(','):
+                    if globals_pybash[function][0].get(i, None):
+                        locals_pybash[globals_pybash[function][0][i]] = pyBashEval(arg[1:-1])
                     else:
-                        raise TooManyArguments("'" + line + "', You can't pass arguments to a function that takes no arguments.")
+                        break
+                    i += 1
                 for code in globals_pybash.get("".join(function), None)[1]:
                     process(code, True, True, True)
                 __exit_function__ = False
@@ -118,7 +148,7 @@ def process(line: str, __ignore_while_loops__: bool = False, __ignore_if_stateme
                     globals_pybash[prefix + __out_function__][0][i] = arg
         case ['DEFINE', 'FUNC', *function]:
             __out_function__ = "-".join(function).removesuffix(";")
-            globals_pybash[prefix + __out_function__] = [{}, []]
+            globals_pybash[prefix + __out_function__] = pyBashFunction([{}, []])
         # importing
         case ['INCLUDE', obj, 'FROM', library]:
             try:
@@ -221,7 +251,7 @@ def process(line: str, __ignore_while_loops__: bool = False, __ignore_if_stateme
         case ['RETURN', *to_return]:
             globals_pybash['RETURN'] = eval(" ".join(to_return).removesuffix(';'), globals_pybash, locals_pybash)
             __exit_function__ = True
-        case other:
+        case _:
             if line != "ENDWHILE;" and line != "ENDIF;":
                 raise SyntaxError(line)
 
