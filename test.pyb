@@ -3,6 +3,6 @@ INCLUDE token_bytes FROM secrets;
 
 $ this is a syntax test, it will hash a random token
 $ if you notice closely, the argument is a PyBash(!) expression
-CALL test2.hash_pswd ARGS (CALL token_bytes);
+CALL test2.hash_pswd ARGS (CALL token_bytes ARGS (16));
 
 CALL print ARGS (RETURN);
