@@ -63,6 +63,9 @@ def pyBashEval(line: str):
         case [variable]:
             if variable in globals_pybash:
                 return globals_pybash[variable]
+            else:
+                # leave it to the python interpreter
+                return eval(variable, globals_pybash, locals_pybash)
 
 def process(line: str, __ignore_while_loops__: bool = False, __ignore_if_statements__: bool = False, __ignore_for_loops__: bool = False, prefix: str = '') -> None:
     global __out_function__, __while_loops__, __in_while_loop__, __for_loops__, __in_for_loop__, __if_statements__, __in_if_statement__, locals_pybash, __exit_function__, globals_pybash
@@ -140,7 +143,7 @@ def process(line: str, __ignore_while_loops__: bool = False, __ignore_if_stateme
         # function definition, it just records the code so we can evaluate each line eventually
         case ['DEFINE', 'FUNC', function, 'ARGS', *args]:
             __out_function__ = function.removesuffix(";")
-            globals_pybash[prefix + __out_function__] = [{}, []]
+            globals_pybash[prefix + __out_function__] = pyBashFunction([{}, []])
             for i, arg in enumerate(args):
                 if i == len(args) - 1:
                     globals_pybash[prefix + __out_function__][0][i] = arg.removesuffix(";")
